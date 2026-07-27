@@ -1,0 +1,17 @@
+apiVersion: flowcontrol.apiserver.k8s.io/v1beta2
+kind: FlowSchema
+metadata:
+  name: disallowed-flowschema
+spec:
+  matchingPrecedence: 1000
+  priorityLevelConfiguration:
+    name: exempt
+  rules:
+    - nonResourceRules:
+        - nonResourceURLs:
+            - "/healthz"
+          verbs:
+            - "*"
+      subjects:
+        - kind: Group
+          name: system:unauthenticated

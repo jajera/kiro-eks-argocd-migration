@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatekeeper
+  namespace: argocd
+  labels:
+    owner: platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jajera/kiro-eks-argocd-migration.git
+    targetRevision: main
+    path: infrastructure/gatekeeper/base/vendored/chart/gatekeeper
+    helm:
+      releaseName: gatekeeper
+      values: |
+        auditInterval: 60
+        replicas: 1
+        validatingWebhookTimeoutSeconds: 15
+        mutatingWebhookTimeoutSeconds: 5
+        validatingWebhookFailurePolicy: Ignore
+        validatingWebhookCheckIgnoreFailurePolicy: Ignore
+        metricsBackends:
+          - prometheus
+        syncVAPEnforcementScope: true
+        controllerManager:
+          readinessTimeout: 5
+          livenessTimeout: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 768Mi
+            limits:
+              memory: 1Gi
+        audit:
+          readinessTimeout: 5
+          livenessTimeout: 5
+  destination:
+    name: in-cluster
+    namespace: gatekeeper-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /spec/preserveUnknownFields
+        - /metadata/managedFields
+        - /status
+      jqPathExpressions:
+        - .spec.versions[]?.preserveUnknownFields

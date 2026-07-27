@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: privileged-containers
+    template: ../../constraint-templates/privileged-containers.yaml
+    constraint: ../../constraints/privileged-containers/constraint.yaml
+    cases:
+      - name: non-privileged-pod
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: privileged-pod
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

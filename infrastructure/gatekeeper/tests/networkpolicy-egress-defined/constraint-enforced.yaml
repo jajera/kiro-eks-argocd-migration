@@ -1,0 +1,14 @@
+# Used only in gator verify: enable prefix enforcement
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sNetworkPolicyEgress
+metadata:
+  name: networkpolicy-egress-explicit-test
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: ["networking.k8s.io"]
+        kinds: ["NetworkPolicy"]
+  parameters:
+    enforcedNamespacePrefixes:
+      - "k8sforge-egress-"

@@ -1,0 +1,27 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sContainerLimits
+metadata:
+  labels:
+    owner: platform
+  name: container-must-have-limits
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - argocd
+      # EKS managed add-ons often omit CPU/memory limits; not configurable on create.
+      - aws-secrets-manager
+      - cert-manager
+      - external-dns
+      - fluent-bit
+      - kube-state-metrics
+      - mount-s3
+      - prometheus-node-exporter
+  parameters:
+    cpu: "1000m"
+    memory: "512Mi"

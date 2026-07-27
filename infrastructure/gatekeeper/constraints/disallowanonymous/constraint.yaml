@@ -1,0 +1,20 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDisallowAnonymous
+metadata:
+  labels:
+    owner: platform
+  name: disallow-anonymous
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        kinds: ["ClusterRoleBinding"]
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        kinds: ["RoleBinding"]
+    excludedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - kube-public
+      - kube-node-lease
+      - argocd

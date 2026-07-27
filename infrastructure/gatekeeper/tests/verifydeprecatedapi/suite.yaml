@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: verify-deprecated-api
+    template: ../../constraint-templates/verifydeprecatedapi.yaml
+    constraint: ../../constraints/verifydeprecatedapi/constraint.yaml
+    cases:
+      - name: flowschema-v1beta3-allowed
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: flowschema-v1beta2-disallowed
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

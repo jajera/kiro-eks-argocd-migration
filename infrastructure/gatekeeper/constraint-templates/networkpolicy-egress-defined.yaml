@@ -1,0 +1,79 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8snetworkpolicyegress
+  annotations:
+    metadata.gatekeeper.sh/title: "NetworkPolicy egress must be explicit when required"
+    metadata.gatekeeper.sh/version: 1.0.0
+    description: >-
+      If `spec.policyTypes` includes `Egress` (or is omitted, meaning both
+      Ingress and Egress are controlled), a NetworkPolicy in a namespace
+      whose name matches a configured prefix list must list at least one
+      `spec.egress` rule. Use `enforcedNamespacePrefixes: []` to disable. This
+      does not replace a default-deny CNI; it nudges teams that opted into
+      PolicyTypes=Egress to define concrete egress when you scope namespaces
+      for egress control.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sNetworkPolicyEgress
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            enforcedNamespacePrefixes:
+              type: array
+              description: >-
+                If empty, the constraint does nothing. If non-empty, only
+                NetworkPolicies in namespaces whose name starts with one of
+                these strings are checked.
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8snetworkpolicyegress
+
+        violation[{"msg": msg}] {
+          np := input.review.object
+          np.apiVersion == "networking.k8s.io/v1"
+          np.kind == "NetworkPolicy"
+          not disabled
+          not exempt_from_enforcement(np)
+          controls_egress(np)
+          not has_egress_rules(np)
+          msg := sprintf("NetworkPolicy %s/%s must define at least one spec.egress entry when Egress is in policyTypes (or policyTypes is omitted) and the namespace is covered by enforcedNamespacePrefixes", [np.metadata.namespace, np.metadata.name])
+        }
+
+        get_prefixes = p {
+          params := object.get(input, "parameters", {})
+          p := object.get(params, "enforcedNamespacePrefixes", [])
+        }
+
+        disabled {
+          count(get_prefixes) == 0
+        }
+
+        exempt_from_enforcement(np) {
+          not any_prefix_match(np.metadata.namespace, get_prefixes)
+        }
+
+        any_prefix_match(ns, prefs) {
+          p := prefs[_]
+          p != ""
+          startswith(ns, p)
+        }
+
+        controls_egress(np) {
+          not np.spec.policyTypes
+        }
+        controls_egress(np) {
+          pol := np.spec.policyTypes[_]
+          pol == "Egress"
+        }
+
+        has_egress_rules(np) {
+          e := np.spec.egress
+          count(e) > 0
+        }

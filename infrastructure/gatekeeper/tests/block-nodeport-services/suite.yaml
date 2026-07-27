@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: block-nodeport
+    template: ../../constraint-templates/block-nodeport-services.yaml
+    constraint: ../../constraints/block-nodeport-services/constraint.yaml
+    cases:
+      - name: clusterip-service
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: nodeport-service
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

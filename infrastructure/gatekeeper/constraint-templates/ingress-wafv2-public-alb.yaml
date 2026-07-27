@@ -1,0 +1,50 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8singresswafv2
+  annotations:
+    metadata.gatekeeper.sh/title: "WAFv2 on public ALB ingress"
+    metadata.gatekeeper.sh/version: 1.1.0
+    description: >-
+      For Ingress resources that use the AWS ALB class and
+      `alb.ingress.kubernetes.io/scheme: internet-facing`, require
+      `alb.ingress.kubernetes.io/wafv2-acl-arn` to match the full regional
+      WAFv2 Web ACL ARN shape (not a bare prefix). Exceptions only via the
+      Constraint `excludedNamespaces` in kube-infra.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sIngressWafV2
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8singresswafv2
+
+        violation[{"msg": msg}] {
+          ingress := input.review.object
+          ingress.kind == "Ingress"
+          regex.match("^(extensions|networking.k8s.io)/", input.review.object.apiVersion)
+          is_public_internet_alb(ingress)
+          not has_wafv2_arn(ingress)
+          msg := sprintf("Internet-facing ALB ingress %s/%s must set alb.ingress.kubernetes.io/wafv2-acl-arn to a full regional WAFv2 Web ACL ARN (arn:aws:wafv2:region:account:regional/webacl/name/id). Central exclusions only: Constraint excludedNamespaces in kube-infra.", [ingress.metadata.namespace, ingress.metadata.name])
+        }
+
+        is_public_internet_alb(ingress) {
+          is_alb(ingress)
+          ingress.metadata.annotations["alb.ingress.kubernetes.io/scheme"] == "internet-facing"
+        }
+
+        is_alb(ingress) {
+          ingress.spec.ingressClassName == "alb"
+        }
+        is_alb(ingress) {
+          ingress.metadata.annotations["kubernetes.io/ingress.class"] == "alb"
+        }
+
+        # Full regional Web ACL ARN shape (same as AWS console / CLI); rejects prefix-only and junk tokens.
+        has_wafv2_arn(ingress) {
+          a := ingress.metadata.annotations["alb.ingress.kubernetes.io/wafv2-acl-arn"]
+          a != ""
+          regex.match(`^arn:aws:wafv2:[a-z0-9-]+:[0-9]{12}:regional/webacl/[a-zA-Z0-9_.-]+/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`, a)
+        }

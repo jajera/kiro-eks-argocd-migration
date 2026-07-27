@@ -1,0 +1,11 @@
+# Default constraint has no prefixes: nothing to enforce
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pol
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress: []

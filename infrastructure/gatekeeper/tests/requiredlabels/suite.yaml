@@ -1,0 +1,19 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: namespaces-must-have-owner
+    template: ../../constraint-templates/requiredlabels.yaml
+    constraint: ../../constraints/requiredlabels/constraint.yaml
+    cases:
+      - name: namespace-with-owner-label
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: namespace-without-owner-label
+        object: fail.yaml
+        assertions:
+          - violations: "yes"
+      - name: eks-addon-namespace-excluded-without-owner
+        object: pass-eks-addon-namespace.yaml
+        assertions:
+          - violations: "no"

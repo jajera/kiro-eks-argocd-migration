@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: disallow-anonymous
+    template: ../../constraint-templates/disallowanonymous.yaml
+    constraint: ../../constraints/disallowanonymous/constraint.yaml
+    cases:
+      - name: binding-without-anonymous-subjects
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: binding-with-unauthenticated
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

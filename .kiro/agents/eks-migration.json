@@ -1,0 +1,10 @@
+{
+  "name": "eks-migration",
+  "description": "Migrates workloads onto EKS managed by Argo CD, following the gated migration workflow.",
+  "welcomeMessage": "EKS migration agent. Tell me what to migrate, for example: migrate the app in ./src to EKS.",
+  "tools": ["*"],
+  "resources": [
+    "file://.kiro/steering/*.md",
+    "skill://.kiro/skills/*/SKILL.md"
+  ]
+}

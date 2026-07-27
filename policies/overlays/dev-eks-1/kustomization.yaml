@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      group: templates.gatekeeper.sh
+      version: v1
+      kind: ConstraintTemplate
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+  - target:
+      group: constraints.gatekeeper.sh
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "2"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-options
+        value: SkipDryRunOnMissingResource=true
+  - target:
+      group: constraints.gatekeeper.sh
+      kind: K8sRequiredLabels
+      name: namespaces-must-have-owner
+    patch: |-
+      - op: replace
+        path: /spec/enforcementAction
+        value: deny
+  - target:
+      group: constraints.gatekeeper.sh
+      kind: K8sDisallowDefaultNamespace
+      name: disallow-default-namespace
+    patch: |-
+      - op: replace
+        path: /spec/enforcementAction
+        value: deny

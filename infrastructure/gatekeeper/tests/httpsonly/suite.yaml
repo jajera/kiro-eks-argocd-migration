@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: ingress-https-only
+    template: ../../constraint-templates/httpsonly.yaml
+    constraint: ../../constraints/httpsonly/constraint.yaml
+    cases:
+      - name: ingress-with-tls
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: ingress-without-tls
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: no-privilege-escalation
+    template: ../../constraint-templates/allow-privilege-escalation.yaml
+    constraint: ../../constraints/allow-privilege-escalation/constraint.yaml
+    cases:
+      - name: pod-no-escalation
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: pod-allows-escalation
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: disallow-default-namespace
+    template: ../../constraint-templates/disallow-default-namespace.yaml
+    constraint: ../../constraints/disallow-default-namespace/constraint.yaml
+    cases:
+      - name: pod-in-custom-namespace
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: pod-in-default-namespace
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

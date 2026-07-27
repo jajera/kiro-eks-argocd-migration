@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-prod-eks-1
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/jajera/kiro-eks-argocd-migration.git
+        revision: main
+        directories:
+          - path: apps/*/overlays/prod-eks-1
+  template:
+    metadata:
+      name: "{{path.segments.[1]}}-prod-eks-1"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/jajera/kiro-eks-argocd-migration.git
+        targetRevision: main
+        path: "{{path.path}}"
+      destination:
+        name: in-cluster
+        namespace: "{{path.segments.[1]}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

@@ -1,0 +1,18 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: VerifyDeprecatedAPI
+metadata:
+  labels:
+    owner: platform
+  name: verify-deprecated-api
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: ["flowcontrol.apiserver.k8s.io"]
+        kinds: ["FlowSchema", "PriorityLevelConfiguration"]
+  parameters:
+    kvs:
+      - deprecatedAPI: "flowcontrol.apiserver.k8s.io/v1beta2"
+        kinds: ["FlowSchema", "PriorityLevelConfiguration"]
+        targetAPI: "flowcontrol.apiserver.k8s.io/v1beta3"
+    k8sVersion: 1.29

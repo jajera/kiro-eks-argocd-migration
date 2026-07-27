@@ -1,0 +1,53 @@
+# PR-only: validate Kustomize under apps/.
+#
+# Bases: apps/<app>/base/ — Overlays: apps/<app>/overlays/<cluster>/ (excludes vendored).
+# Passes with a skip message when apps/ has no kustomization roots yet.
+name: Kustomize build
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - ".github/workflows/kustomize-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: kustomize build (apps)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install kustomize
+        env:
+          KUSTOMIZE_VERSION: "5.8.1"
+        run: |
+          curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin
+          kustomize version
+
+      - name: Build all discovered bases and overlays
+        run: |
+          set -euo pipefail
+          if [ ! -d apps ]; then
+            echo "No apps/ directory yet — skip."
+            exit 0
+          fi
+          mapfile -t kustom_files < <(find apps -type f \( \
+            \( -path '*/base/kustomization.yaml' ! -path '*/vendored/*' \) -o \
+            \( -path '*/base/manifests/kustomization.yaml' ! -path '*/vendored/*' \) -o \
+            \( -path '*/overlays/*/kustomization.yaml' ! -path '*/vendored/*' \) -o \
+            \( -path '*/overlays/*/manifests/kustomization.yaml' ! -path '*/vendored/*' \) \
+          \) | sort -u)
+          if [ "${#kustom_files[@]}" -eq 0 ]; then
+            echo "No kustomization.yaml files matched under apps/ — skip."
+            exit 0
+          fi
+          for k in "${kustom_files[@]}"; do
+            d=$(dirname "$k")
+            echo "kustomize build $d"
+            kustomize build "$d" >/dev/null
+          done
+          echo "All kustomize builds succeeded (${#kustom_files[@]} roots)."

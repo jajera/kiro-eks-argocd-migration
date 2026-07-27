@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Validate App Scaffold",
+  "description": "After editing files under apps/, check the app has a complete tree: base, both overlays, kind-named files, labels, resources, NetPol, probes/PDB when required, secrets SPC, iam.tf when needed, and README with Inputs/outputs Mermaid (fmp-polling style) that passes markdown lint.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "apps/**/*.yaml",
+      "apps/**/*.yml",
+      "apps/**/*.tf",
+      "apps/**/*.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A file under apps/ was edited. Check scaffold completeness for that app:\n1. apps/<app>/base/ must contain namespace.yaml, application.yaml, and kustomization.yaml.\n2. Both apps/<app>/overlays/dev-eks-1/ and apps/<app>/overlays/prod-eks-1/ must exist, each with kustomization.yaml and application-patch.yaml. A missing prod overlay is an error, not something to defer to promotion.\n3. Manifest filenames must match Kubernetes Kind (lowercase): application.yaml, deployment.yaml, networkpolicy.yaml, secretproviderclass.yaml, poddisruptionbudget.yaml, etc. If a Kind already has a file, use a suffix. Overlay patches are {kind}-patch.yaml. Rename any non-conforming files.\n4. Namespace labels: name=<app>, owner=platform. Workloads/SA/NetworkPolicy/pod templates: app.kubernetes.io/name=<app> and owner=platform. Selectors and NetPol podSelector must use app.kubernetes.io/name. Manifests kustomization adds app.kubernetes.io/part-of=<app>.\n5. Plain-manifest apps must have base/manifests/networkpolicy.yaml with default-deny-all, then one allow NetworkPolicy per required flow (never combine allows). DNS allow is always required.\n6. Every container (including init containers and sidecars) must have explicit CPU and memory requests and limits.\n7. web-service: every HTTP container must have readiness and liveness probes.\n8. Deployments should use rollingUpdate maxUnavailable: 0 and maxSurge: 1. When replicas (or KEDA/HPA min) >= 2, require poddisruptionbudget.yaml with minAvailable: 1. If replicas == 1, do not leave that PDB in place \u2014 remove it or raise replicas (otherwise DisruptionBlocked on drain).\n9. Image references must be 111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app> \u2014 assume the ECR repo already exists; do not create it.\n10. If the app uses secrets: each overlay must have manifests/secretproviderclass.yaml (region ap-southeast-2, usePodIdentity true), the workload patch must mount the CSI secrets-store volume and use secretKeyRef, and iam.tf must allow secretsmanager:GetSecretValue on those secret ARNs. Follow the identity-and-secrets steering snippet exactly.\n11. If the app calls any AWS API (or uses secrets) it needs apps/<app>/iam.tf. Run terraform fmt -check on it.\n12. ALWAYS require apps/<app>/README.md (every app). Follow gitops-conventions \"App README\" and the kube-devops-apps fmp-polling shape: purpose; ## Inputs and outputs with Mermaid flowchart LR using subgraph inputs [Inputs], middle worker/app node(s), subgraph outputs [Outputs], and labeled edges that state how each link works (protocol, env, Pod Identity, CSI); tables under the diagram; image/IAM/networking sections as needed. Derive nodes from the app config \u2014 do not use a shallow Client->ALB->Pod Architecture stub. Create or fix the README if missing or incomplete.\n13. Run: npx --yes markdownlint-cli2 \"apps/<app>/README.md\" using .markdownlint.json. Fix any lint findings before finishing.\nCreate anything missing, following the gitops-conventions, workload-archetypes, and identity-and-secrets steering files. Report what was missing and what you created. If a required value is unknown, ask rather than writing a placeholder."
+  }
+}

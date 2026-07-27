@@ -1,0 +1,21 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPHostFilesystem
+metadata:
+  labels:
+    owner: platform
+  name: no-host-paths
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - argocd
+      # EKS managed add-ons (CSI / node agents) require hostPath; not configurable in the add-on.
+      - aws-secrets-manager
+      - mount-s3
+      - prometheus-node-exporter
+      - fluent-bit
