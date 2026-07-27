@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: restrict-host-namespaces
+    template: ../../constraint-templates/host-namespaces.yaml
+    constraint: ../../constraints/host-namespaces/constraint.yaml
+    cases:
+      - name: pod-no-host-namespace
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: pod-with-host-pid
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

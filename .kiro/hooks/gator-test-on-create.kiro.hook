@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Gator Test on Create",
+  "description": "When workload manifests are created under apps/, run gator test against the overlay to catch admission violations before commit.",
+  "version": "1",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "apps/**/manifests/**/*.yaml",
+      "apps/**/manifests/**/*.yml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A workload manifest was created. Run Gatekeeper policy validation:\n1. Derive the app name and cluster from the file path (e.g. apps/<app>/overlays/<cluster>/manifests/).\n2. If the path is under base/manifests/, validate both overlays (dev-eks-1 and prod-eks-1).\n3. Ensure gator is available: if missing, run scripts/install-gator.sh then continue (do not silently skip).\n4. Run: scripts/gatekeeper-gator-test.sh apps/<app>/overlays/<cluster>/manifests\n5. Only if policies/ is missing, fall back to: kustomize build apps/<app>/overlays/<cluster>/manifests — and say so.\n6. If violations are found, fix them following the policy-validation steering file and re-run until clean.\n7. Report which checks ran and the result (no silent skip when gator can be installed)."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Kustomize Build Check",
+  "description": "When a kustomization.yaml under apps/ is created or edited, build that directory to confirm Kustomize resolves resources and patches.",
+  "version": "1",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "apps/**/kustomization.yaml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A kustomization.yaml was created or is being validated after create. Run: kustomize build <its directory>\nIf that directory is apps/<app>/overlays/<cluster>/manifests, also run: kustomize build apps/<app>/overlays/<cluster> and kustomize build apps/<app>/base when those roots exist.\nIf a build fails, diagnose it: missing resource paths, a patch whose target does not match any resource, or a base reference pointing at a directory with no kustomization.yaml. Fix the cause and re-run. Report which builds ran and the result."
+  }
+}

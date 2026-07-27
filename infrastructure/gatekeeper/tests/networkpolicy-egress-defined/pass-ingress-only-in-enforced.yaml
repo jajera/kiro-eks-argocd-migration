@@ -1,0 +1,11 @@
+# policyTypes: Ingress only — does not control egress; constraint skips
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pol
+  namespace: k8sforge-egress-ingressonly
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress: []

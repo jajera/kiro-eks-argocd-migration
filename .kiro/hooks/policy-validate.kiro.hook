@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Policy Validate",
+  "description": "After editing workload manifests, validate resources, NetworkPolicy, probes/PDB, secrets wiring, and admission policies.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "apps/**/manifests/**/*.yaml",
+      "apps/**/manifests/**/*.yml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A workload manifest was edited. Validate it:\n1. Derive the app and cluster from the edited file path.\n2. Confirm every container has explicit CPU and memory requests and limits.\n3. Confirm NetworkPolicy has default-deny-all plus separate allow policies (not combined).\n4. If this is a web-service, confirm readiness and liveness probes on every HTTP container.\n5. Deployments: prefer rollingUpdate maxUnavailable: 0 and maxSurge: 1. PDB: if replicas (or KEDA/HPA min) >= 2, require poddisruptionbudget.yaml with minAvailable: 1. If replicas == 1, that PDB must NOT exist \u2014 remove it or raise replicas (minAvailable: 1 on one pod = DisruptionBlocked on drain).\n6. If a SecretProviderClass exists: confirm region ap-southeast-2, usePodIdentity true, labels, CSI volume mount on the workload, secretKeyRef for env secrets, and secretsmanager:GetSecretValue in iam.tf. Flag SPC without a mount.\n7. Read policy_engine from .kiro/steering/project-profile.md.\n8. If it is gatekeeper, run: scripts/gatekeeper-gator-test.sh apps/<app>/overlays/<cluster>/manifests\n9. If it is none, or the tooling is unavailable, fall back to: kustomize build apps/<app>/overlays/<cluster>/manifests\n10. Fix any violations following the policy-validation steering file.\n11. Report which checks ran, which were skipped and why, and the result of each."
+  }
+}

@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: no-host-paths
+    template: ../../constraint-templates/host-filesystem.yaml
+    constraint: ../../constraints/host-filesystem/constraint.yaml
+    cases:
+      - name: pod-no-hostpath
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: pod-with-hostpath
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

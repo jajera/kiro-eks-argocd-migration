@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatekeeper-policies
+  namespace: argocd
+  labels:
+    owner: platform
+    argocd.argoproj.io/parent-app: gatekeeper
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jajera/kiro-eks-argocd-migration.git
+    targetRevision: main
+    path: policies/overlays/dev-eks-1
+  destination:
+    name: in-cluster
+    namespace: ""
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  ignoreDifferences:
+    - group: constraints.gatekeeper.sh
+      kind: K8sContainerLimits
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sRequiredLabels
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sDisallowDefaultNamespace
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sPSPAllowPrivilegeEscalationContainer
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sNetworkPolicyEgress
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sIngressWafV2
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sHttpsOnly
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sDisallowedTags
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sBlockNodePort
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sPSPPrivilegedContainer
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sPSPHostNamespace
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sPSPHostFilesystem
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: K8sDisallowAnonymous
+      jqPathExpressions: [".status"]
+    - group: constraints.gatekeeper.sh
+      kind: VerifyDeprecatedAPI
+      jqPathExpressions: [".status"]
+    - group: templates.gatekeeper.sh
+      kind: ConstraintTemplate
+      jsonPointers: ["/status"]

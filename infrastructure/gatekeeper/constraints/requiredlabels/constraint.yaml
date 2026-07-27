@@ -1,0 +1,44 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: namespaces-must-have-owner
+  labels:
+    owner: platform
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Namespace"]
+    excludedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - argocd
+      # EKS managed / community add-ons create these namespaces without an owner label (not configurable on create).
+      - aws-secrets-manager
+      - cert-manager
+      - external-dns
+      - fluent-bit
+      - kube-state-metrics
+      - mount-s3
+      - prometheus-node-exporter
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - gatekeeper-system
+            - argocd
+            - aws-secrets-manager
+            - cert-manager
+            - external-dns
+            - fluent-bit
+            - kube-state-metrics
+            - mount-s3
+            - prometheus-node-exporter
+  parameters:
+    message: "All namespaces must have an owner label"
+    labels:
+      - key: owner
+        allowedRegex: ".+"

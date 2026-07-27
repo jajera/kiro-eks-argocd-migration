@@ -1,0 +1,31 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: networkpolicy-egress-defined
+    template: ../../constraint-templates/networkpolicy-egress-defined.yaml
+    constraint: ../../constraints/networkpolicy-egress-defined/constraint.yaml
+    cases:
+      - name: disabled-when-no-prefixes
+        object: pass-empty-egress-default-ns.yaml
+        assertions:
+          - violations: "no"
+  - name: networkpolicy-egress-with-enforcement
+    template: ../../constraint-templates/networkpolicy-egress-defined.yaml
+    constraint: constraint-enforced.yaml
+    cases:
+      - name: empty-egress-in-enforced-namespace
+        object: fail-no-egress-in-enforced.yaml
+        assertions:
+          - violations: "yes"
+      - name: with-egress-in-enforced-namespace
+        object: pass-with-egress-in-enforced.yaml
+        assertions:
+          - violations: "no"
+      - name: only-ingress-in-enforced-namespace
+        object: pass-ingress-only-in-enforced.yaml
+        assertions:
+          - violations: "no"
+      - name: wrong-namespace-ignored
+        object: pass-empty-egress-wrong-namespace.yaml
+        assertions:
+          - violations: "no"

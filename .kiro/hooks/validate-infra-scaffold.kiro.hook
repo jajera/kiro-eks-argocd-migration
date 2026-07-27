@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Validate Infra Scaffold",
+  "description": "After editing bootstrap/, clusters/, or infrastructure/, check both clusters stay in step, ApplicationSets match conventions, and platform add-ons (e.g. Gatekeeper) have complete base + overlays for dev-eks-1 and prod-eks-1.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "bootstrap/**",
+      "clusters/**",
+      "infrastructure/**",
+      "policies/**"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A platform/infra file was edited. Check scaffold completeness for the affected area. Do not scaffold apps/.\n\nClusters (always both):\n1. clusters/dev-eks-1/applicationset.yaml and clusters/prod-eks-1/applicationset.yaml must both exist and stay aligned except for the cluster name in discovery path and Application name template.\n2. Each ApplicationSet must discover apps/*/overlays/<cluster>, name Applications <app>-<cluster>, use project default, destination.name in-cluster, targetRevision main, automated prune+selfHeal, and repoURL https://github.com/jajera/kiro-eks-argocd-migration.git.\n3. A change to one cluster's ApplicationSet almost always needs the same change on the other — if they diverge, the difference must be deliberate and explained.\n\nBootstrap:\n4. bootstrap/dev-eks-1/ and bootstrap/prod-eks-1/ must both exist. Bootstrap is applied out-of-band (not by Argo CD syncing itself). READMEs must name the correct cluster, account (dev 111122223333 / prod 444455556666), and region ap-southeast-2.\n5. If install manifests or root Applications are present for one cluster, the other cluster needs the matching shape (adapted for cluster/account).\n\nPlatform add-ons (when infrastructure/ or policies/ exists — e.g. Gatekeeper):\n6. Operator/add-on trees must have base/ plus overlays for both dev-eks-1 and prod-eks-1. Missing prod overlay is an error.\n7. Gatekeeper-style stacks: constraint-templates + constraints + policies/base; policies/overlays/<cluster> when per-cluster enforcement differs. Nested policies Application must sync after the operator (sync waves). Argo Applications use destination.name in-cluster, project default (unless an AppProject already exists), targetRevision main, this repo URL.\n8. Manifest filenames follow Kind lowercase naming where applicable; overlay patches are {kind}-patch.yaml. Labels use owner: platform (not devops).\n9. Do not install AWS Load Balancer Controller, EBS CSI, or node lifecycle add-ons — EKS Auto Mode owns those.\n10. Offline validation: if policies/base (or POLICY_DIR) exists and policy_engine is gatekeeper, confirm scripts/gatekeeper-gator-test.sh can resolve that bundle; run gator verify on tests/ when present. If policy_engine is none or tooling is missing, report skip — do not invent a parallel checker.\n\nGeneral:\n11. Follow manage-clusters skill and project-profile / gitops-conventions steering. Create anything missing that the edited path implies; ask rather than inventing unknown values (chart versions, WAF ARNs, live cluster endpoints).\n12. Report what was checked, what was missing, what you fixed, and any intentional cluster divergence."
+  }
+}

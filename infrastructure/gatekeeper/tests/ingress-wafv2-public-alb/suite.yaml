@@ -1,0 +1,27 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: wafv2-on-public-alb-ingress
+    template: ../../constraint-templates/ingress-wafv2-public-alb.yaml
+    constraint: ../../constraints/ingress-wafv2-public-alb/constraint.yaml
+    cases:
+      - name: public-alb-with-waf-arn
+        object: pass-with-waf.yaml
+        assertions:
+          - violations: "no"
+      - name: public-alb-missing-waf-arn
+        object: fail-missing-waf.yaml
+        assertions:
+          - violations: "yes"
+      - name: public-alb-partial-waf-arn-rejected
+        object: fail-partial-arn.yaml
+        assertions:
+          - violations: "yes"
+      - name: internal-alb-skips
+        object: pass-internal-scheme.yaml
+        assertions:
+          - violations: "no"
+      - name: excluded-namespace-no-waf-ok
+        object: pass-in-excluded-namespace.yaml
+        assertions:
+          - violations: "no"

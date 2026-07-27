@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: no-latest-tag
+    template: ../../constraint-templates/disallowedtags.yaml
+    constraint: ../../constraints/disallowedtags/constraint.yaml
+    cases:
+      - name: pod-with-pinned-tag
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: pod-with-latest-tag
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

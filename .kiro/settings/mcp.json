@@ -1,0 +1,55 @@
+{
+  "mcpServers": {
+    "aws-knowledge": {
+      "type": "http",
+      "url": "https://knowledge-mcp.global.api.aws",
+      "disabled": false,
+      "autoApprove": [
+        "search_documentation",
+        "read_documentation",
+        "list_regions",
+        "get_regional_availability"
+      ]
+    },
+    "eks": {
+      "command": "uvx",
+      "args": [
+        "mcp-proxy-for-aws@latest",
+        "https://eks-mcp.ap-southeast-2.api.aws/mcp",
+        "--service",
+        "eks-mcp",
+        "--profile",
+        "dev",
+        "--region",
+        "ap-southeast-2",
+        "--read-only"
+      ],
+      "env": {
+        "AWS_PROFILE": "dev",
+        "AWS_REGION": "ap-southeast-2"
+      },
+      "disabled": true,
+      "autoApprove": [
+        "list_k8s_resources",
+        "get_k8s_resource",
+        "get_pod_logs",
+        "list_eks_clusters"
+      ]
+    },
+    "kubernetes": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-kubernetes"],
+      "env": {
+        "ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS": "true"
+      },
+      "disabled": true,
+      "autoApprove": []
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

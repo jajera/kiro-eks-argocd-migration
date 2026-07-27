@@ -1,0 +1,53 @@
+# PR-only: run gator verify against Gatekeeper test suites.
+#
+# Validates ConstraintTemplates and Constraints offline using the gator CLI.
+# Pin + SHA live in scripts/install-gator.sh (single source of truth).
+#
+# TODO: add `gator test` against apps/** once applications exist.
+name: Policy validate
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/gatekeeper/**"
+      - "policies/**"
+      - "scripts/gatekeeper-gator-test.sh"
+      - "scripts/install-gator.sh"
+      - "scripts/expand-pod-templates.py"
+      - ".github/workflows/policy-validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  gator-verify:
+    name: gator verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pinned gator CLI
+        run: |
+          set -euo pipefail
+          chmod +x scripts/install-gator.sh
+          scripts/install-gator.sh /usr/local/bin
+          gator version || { echo "::error::gator install failed"; exit 1; }
+
+      - name: Run gator verify
+        run: |
+          set -euo pipefail
+          tests_dir="infrastructure/gatekeeper/tests"
+
+          if [ ! -d "${tests_dir}" ]; then
+            echo "No tests directory (${tests_dir}) — skip."
+            exit 0
+          fi
+
+          if ! find "${tests_dir}" -name 'suite.yaml' -print -quit | grep -q .; then
+            echo "Tests directory exists but contains no suite.yaml files — skip."
+            exit 0
+          fi
+
+          echo "Running: gator verify ${tests_dir}/..."
+          gator verify "${tests_dir}/..."

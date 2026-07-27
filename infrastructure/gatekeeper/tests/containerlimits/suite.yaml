@@ -1,0 +1,15 @@
+kind: Suite
+apiVersion: test.gatekeeper.sh/v1alpha1
+tests:
+  - name: container-must-have-limits
+    template: ../../constraint-templates/containerlimits.yaml
+    constraint: ../../constraints/containerlimits/constraint.yaml
+    cases:
+      - name: pod-with-limits
+        object: pass.yaml
+        assertions:
+          - violations: "no"
+      - name: pod-without-limits
+        object: fail.yaml
+        assertions:
+          - violations: "yes"

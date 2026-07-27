@@ -1,0 +1,31 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDisallowDefaultNamespace
+metadata:
+  labels:
+    owner: platform
+  name: disallow-default-namespace
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds:
+          - Pod
+          - Service
+          - ConfigMap
+          - Secret
+          - PersistentVolumeClaim
+          - ServiceAccount
+      - apiGroups: ["apps"]
+        kinds:
+          - Deployment
+          - ReplicaSet
+          - StatefulSet
+          - DaemonSet
+      - apiGroups: ["extensions", "networking.k8s.io"]
+        kinds:
+          - Ingress
+      - apiGroups: ["batch"]
+        kinds:
+          - Job
+          - CronJob
