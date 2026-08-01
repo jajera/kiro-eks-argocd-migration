@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kiro EKS migration walkthrough — slideshow</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --fg: #e7ecf1;
+      --muted: #9aa7b5;
+      --accent: #3d9cf0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid #243040;
+    }
+    header h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      flex: 1;
+    }
+    header button, header label {
+      background: #1c2733;
+      color: var(--fg);
+      border: 1px solid #334455;
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      gap: 1rem;
+    }
+    .frame {
+      width: min(1100px, 100%);
+      aspect-ratio: 16 / 10;
+      background: #1a222c;
+      border: 1px solid #2a3848;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .placeholder {
+      color: var(--muted);
+      text-align: center;
+      padding: 2rem;
+      max-width: 28rem;
+      line-height: 1.45;
+    }
+    .caption {
+      width: min(1100px, 100%);
+      font-size: 1.05rem;
+      line-height: 1.4;
+    }
+    .caption small {
+      display: block;
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .progress {
+      width: min(1100px, 100%);
+      height: 4px;
+      background: #243040;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.2s linear;
+    }
+    footer {
+      padding: 0.75rem 1.25rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      border-top: 1px solid #243040;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gated EKS migration factory — stills slideshow</h1>
+    <label>Seconds/slide <input id="secs" type="number" min="2" max="30" value="6" style="width:3.5rem;margin-left:0.35rem;background:#0f1419;color:var(--fg);border:1px solid #334455;border-radius:4px;padding:0.2rem" /></label>
+    <button type="button" id="prev">Prev</button>
+    <button type="button" id="play">Play</button>
+    <button type="button" id="next">Next</button>
+  </header>
+  <main>
+    <div class="frame" id="frame">
+      <img id="img" alt="" hidden />
+      <p class="placeholder" id="ph"></p>
+    </div>
+    <div class="progress"><i id="bar"></i></div>
+    <p class="caption" id="cap"></p>
+  </main>
+  <footer>
+    Stills from <code>docs/media/walkthrough/</code>. Missing images show a capture hint.
+    Keyboard: ← →, Space toggles play.
+  </footer>
+  <script>
+    const slides = [
+      { src: "09-gator-verify.png", title: "Lab A — Offline gator", hint: "gator verify PASS" },
+      { src: "01-repo-tree.png", title: "Lab B — Repo layout", hint: "platform + .kiro on disk" },
+      { src: "14-kiro-explorer-tree.png", title: "Lab B — .kiro/ tree", hint: "steering, skills, hooks, agent, MCP" },
+      { src: "15-steering-profile.png", title: "Lab B — project-profile", hint: "always-on env keys" },
+      { src: "16-steering-archetypes.png", title: "Lab B — archetypes", hint: "fileMatch steering" },
+      { src: "17-skill-add-app.png", title: "Lab B — add-app", hint: "scaffold + validation gate" },
+      { src: "18-skill-migrate.png", title: "Lab B — migrate-workload", hint: "gated phases" },
+      { src: "19-hooks-grid.png", title: "Lab B — Hooks", hint: "enforce + deny live apply" },
+      { src: "08-pdb-rule.png", title: "Lab B — PDB scar", hint: "no minAvailable:1 with replicas:1" },
+      { src: "20-agent-config.png", title: "Lab B — Agent", hint: "eks-migration bundle" },
+      { src: "21-mcp-servers.png", title: "Lab B — MCP", hint: "docs on; cluster off" },
+      { src: "22-specs-timeline.png", title: "Lab B — Specs", hint: "build history" },
+      { src: "10-add-app-session.png", title: "Lab C — Thin prompt", hint: "add-app skill activated" },
+      { src: "10b-add-app-scaffolding.png", title: "Lab C — Scaffolding", hint: "creating apps/demo-nginx" },
+      { src: "07-block-infra-denied.png", title: "Lab C — Shell hook", hint: "Block Infrastructure Commands" },
+      { src: "11-kustomize-build.png", title: "Lab C — Verify", hint: "kustomize + markdownlint pass" },
+      { src: "12-add-app-done.png", title: "Lab C — Done", hint: "dual overlays + 21 changes" },
+      { src: "10-vibe-mode.png", title: "Lab C — Vibe vs Spec", hint: "session mode picker" },
+      { src: "13-pr-checks.png", title: "Lab C — PR checks", hint: "CI green" }
+    ];
+
+    let i = 0;
+    let timer = null;
+    const img = document.getElementById("img");
+    const ph = document.getElementById("ph");
+    const cap = document.getElementById("cap");
+    const bar = document.getElementById("bar");
+    const playBtn = document.getElementById("play");
+
+    function show(n) {
+      i = (n + slides.length) % slides.length;
+      const s = slides[i];
+      cap.innerHTML = `<strong>${i + 1}/${slides.length}. ${s.title}</strong><small>File: ${s.src}</small>`;
+      bar.style.width = `${((i + 1) / slides.length) * 100}%`;
+      img.hidden = true;
+      ph.hidden = false;
+      ph.textContent = "Loading…";
+      const probe = new Image();
+      probe.onload = () => {
+        img.src = s.src;
+        img.alt = s.title;
+        img.hidden = false;
+        ph.hidden = true;
+      };
+      probe.onerror = () => {
+        img.hidden = true;
+        ph.hidden = false;
+        ph.textContent = `Missing ${s.src}. ${s.hint}`;
+      };
+      probe.src = s.src + "?t=" + Date.now();
+    }
+
+    function stop() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      playBtn.textContent = "Play";
+    }
+
+    function start() {
+      stop();
+      const ms = (Number(document.getElementById("secs").value) || 6) * 1000;
+      playBtn.textContent = "Pause";
+      timer = setInterval(() => show(i + 1), ms);
+    }
+
+    document.getElementById("prev").onclick = () => { stop(); show(i - 1); };
+    document.getElementById("next").onclick = () => { stop(); show(i + 1); };
+    playBtn.onclick = () => (timer ? stop() : start());
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { stop(); show(i - 1); }
+      if (e.key === "ArrowRight") { stop(); show(i + 1); }
+      if (e.key === " ") { e.preventDefault(); timer ? stop() : start(); }
+    });
+    show(0);
+  </script>
+</body>
+</html>
