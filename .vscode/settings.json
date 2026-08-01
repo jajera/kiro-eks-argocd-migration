@@ -1,0 +1,80 @@
+{
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true,
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": true,
+  "editor.rulers": [80],
+
+  "files.associations": {
+    "*.kiro.hook": "json",
+    "**/kustomization.yaml": "yaml",
+    "**/kustomization.yml": "yaml"
+  },
+
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "docs/media/walkthrough/_render": true,
+    "infrastructure/gatekeeper/base/vendored": true
+  },
+
+  "search.exclude": {
+    "**/node_modules": true,
+    "docs/media/walkthrough/_render": true,
+    "docs/media/walkthrough/node_modules": true,
+    "infrastructure/gatekeeper/base/vendored": true,
+    "**/*.png": true
+  },
+
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.tabSize": 2
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.tabSize": 2
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "on",
+      "strings": "on",
+      "other": "on"
+    }
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format",
+    "editor.tabSize": 2
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.tabSize": 2
+  },
+  "[python]": {
+    "editor.tabSize": 4
+  },
+
+  "yaml.validate": true,
+  "yaml.format.enable": true,
+  "yaml.schemaStore.enable": true,
+
+  "markdownlint.config": {
+    "extends": ".markdownlint.json"
+  },
+
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "docs/media/walkthrough/_render/**": true,
+    "infrastructure/gatekeeper/base/vendored/**": true
+  }
+}

@@ -48,6 +48,13 @@ a failed check.
 The source workload stays live through Phase 6, so there is a rollback path until you
 choose to give it up.
 
+## Walkthrough
+
+How `.kiro/` was designed from scratch, hooks, Gatekeeper/gator, and the **Kiro**
+thin-prompt `add-app` demo:
+**[docs/Walkthrough.md](docs/Walkthrough.md)**. Stills slideshow:
+[docs/media/walkthrough/slideshow.html](docs/media/walkthrough/slideshow.html).
+
 ## Getting started
 
 1. Fill in `.kiro/steering/project-profile.md` — the real account IDs in place of the

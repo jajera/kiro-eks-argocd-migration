@@ -1,0 +1,12 @@
+{
+  "name": "kiro-walkthrough-media",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "capture": "node capture.mjs",
+    "capture-configs": "node capture-kiro-configs.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.52.0"
+  }
+}

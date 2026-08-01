@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "redhat.vscode-yaml",
+    "DavidAnson.vscode-markdownlint",
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "foxundermoon.shell-format",
+    "ms-python.python"
+  ]
+}
