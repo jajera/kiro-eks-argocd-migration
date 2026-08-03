@@ -43,6 +43,12 @@ If the source is already that repository, record its digest and continue. Otherw
    `111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>`, and push.
 2. Record the resulting digest.
 
+If the image has not been pushed yet (cannot obtain a real digest), use the 64-hex
+dummy digest so the scaffold passes validation:
+
+- Dev: `sha256:0000000000000000000000000000000000000000000000000000000000000001`
+- Prod: `sha256:0000000000000000000000000000000000000000000000000000000000000002`
+
 Never write `docker.io/...`, `ghcr.io/...`, or any other upstream registry into the
 manifests. The source is an input; ECR is the deployed image. Do not create the ECR
 repository from this workflow.
@@ -95,9 +101,48 @@ required — never scaffold one and leave prod for promotion time.
 | `manifests/` | Cluster-specific patches |
 
 Overlay patches cover the pinned image digest
-(`111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>@sha256:<digest>`),
+(`111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>@sha256:<64-hex-digest>`),
 replica count or scaling bounds, resource sizing, and the ingress hostname. Start prod
 as a copy of dev and change only what genuinely differs.
+
+When the real digest is not yet known at scaffold time, use a 64-hex dummy:
+
+- Dev: `sha256:0000000000000000000000000000000000000000000000000000000000000001`
+- Prod: `sha256:0000000000000000000000000000000000000000000000000000000000000002`
+
+Never write `REPLACE_WITH_ACTUAL_DIGEST` — it fails the disallowed-tags constraint.
+These dummies pass `gator test --deny-only` but are not deployable; replace with the
+real digest after pushing the image to ECR.
+
+### Account-specific annotations belong in overlays
+
+Any annotation containing an AWS account ID must live in the overlay's
+`ingress-patch.yaml`, not in base. Dev and prod are separate AWS accounts, so
+these ARNs differ per cluster:
+
+| Annotation | Dev overlay (account `111122223333`) | Prod overlay (account `444455556666`) |
+| --- | --- | --- |
+| `alb.ingress.kubernetes.io/certificate-arn` | `arn:aws:acm:ap-southeast-2:111122223333:certificate/00000000-0000-0000-0000-000000000001` | `arn:aws:acm:ap-southeast-2:444455556666:certificate/00000000-0000-0000-0000-000000000002` |
+| `alb.ingress.kubernetes.io/wafv2-acl-arn` | `arn:aws:wafv2:ap-southeast-2:111122223333:regional/webacl/<app>/00000000-0000-0000-0000-000000000001` | `arn:aws:wafv2:ap-southeast-2:444455556666:regional/webacl/<app>/00000000-0000-0000-0000-000000000002` |
+
+When the real ARN is known, use it. When it is not yet known (initial scaffold), use
+the shape-valid dummies shown above. They pass `gator test --deny-only` because they
+match the WAFv2 regex (`arn:aws:wafv2:<region>:<12-digit>:regional/webacl/<name>/<uuid>`)
+and the ACM ARN shape. They are **not** deployable — replace every dummy with a real
+ARN before the app reaches a live cluster.
+
+Never write bare tokens like `REPLACE_WITH_CERT_ID` or `REPLACE_WITH_WEBACL_ID` — those
+fail Gatekeeper validation offline and in CI.
+
+Base `ingress.yaml` carries only account-neutral annotations (`scheme`,
+`target-type`, `listen-ports`, `kubernetes.io/ingress.allow-http`). The TLS
+section (`spec.tls`) is also overlay-specific because the hostname differs per
+environment. Each overlay's `ingress-patch.yaml` adds:
+
+- `certificate-arn` with the correct account
+- `wafv2-acl-arn` with the correct account
+- `spec.tls` with the environment hostname
+- `spec.rules[].host` with the environment hostname
 
 When `secrets` is not `none`, each overlay's `manifests/` must also include
 `secretproviderclass.yaml` from the identity and secrets steering file, plus the CSI

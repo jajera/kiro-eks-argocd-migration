@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: disallow-default-namespace
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]

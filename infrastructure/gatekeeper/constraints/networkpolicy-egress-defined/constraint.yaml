@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: networkpolicy-egress-explicit
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: ["networking.k8s.io"]

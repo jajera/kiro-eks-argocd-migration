@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: ingress-https-only
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: ["extensions", "networking.k8s.io"]

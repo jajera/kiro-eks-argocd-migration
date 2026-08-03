@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: no-host-paths
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]

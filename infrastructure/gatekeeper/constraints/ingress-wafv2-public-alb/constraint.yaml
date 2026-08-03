@@ -5,8 +5,7 @@ metadata:
     owner: platform
   name: public-alb-ingress-must-refer-wafv2
 spec:
-  # Promotion to deny is gated on real regional WAFv2 ACL ARNs being available
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: ["networking.k8s.io"]

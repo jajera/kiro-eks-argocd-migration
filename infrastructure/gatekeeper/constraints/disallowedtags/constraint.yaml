@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: no-latest-tag
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]

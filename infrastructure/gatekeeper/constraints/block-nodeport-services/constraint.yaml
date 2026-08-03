@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: block-nodeport
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]
