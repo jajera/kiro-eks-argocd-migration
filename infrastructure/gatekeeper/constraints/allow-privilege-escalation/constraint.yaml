@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: no-privilege-escalation
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]

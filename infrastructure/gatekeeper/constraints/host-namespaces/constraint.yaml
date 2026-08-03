@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: restrict-host-namespaces
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]

@@ -47,9 +47,56 @@ legitimately differ:
 | Resource requests and limits | Sized from observed usage per environment |
 | Secret store paths | Separate secrets per environment (`secretproviderclass.yaml` per overlay) |
 | Ingress hostname | Separate DNS per environment |
+| ACM certificate ARN | Each account has its own cert (`alb.ingress.kubernetes.io/certificate-arn`) |
+| WAFv2 Web ACL ARN | Each account has its own WAF (`alb.ingress.kubernetes.io/wafv2-acl-arn`) |
 
 Anything else appearing in one overlay and not the other is usually drift. A setting
 that is only exercised in prod is a setting that is only tested in prod.
+
+### Account-specific annotations live in overlays
+
+Any Ingress annotation containing an AWS account ID (ACM certificate ARN, WAFv2 Web ACL
+ARN) must be set in each overlay's `ingress-patch.yaml`, not in base. Dev and prod are
+separate AWS accounts so these values always differ.
+
+Base `ingress.yaml` carries only account-neutral annotations:
+
+- `kubernetes.io/ingress.allow-http: "false"`
+- `alb.ingress.kubernetes.io/scheme`
+- `alb.ingress.kubernetes.io/target-type`
+- `alb.ingress.kubernetes.io/listen-ports`
+
+Each overlay's `ingress-patch.yaml` adds:
+
+- `alb.ingress.kubernetes.io/certificate-arn` — the ACM cert in that account
+- `alb.ingress.kubernetes.io/wafv2-acl-arn` — the WAFv2 Web ACL in that account
+- `spec.tls` with the environment-specific hostname
+- `spec.rules[].host` with the environment-specific hostname
+
+### Scaffold placeholders must be shape-valid
+
+Never write bare tokens like `REPLACE_WITH_CERT_ID` or `REPLACE_WITH_ACTUAL_DIGEST`
+into manifests. Gatekeeper validates ARN shape and image references at `gator test`
+time, so placeholders that are not structurally valid cause false failures.
+
+When the real value is unknown at scaffold time, use these shape-valid dummies:
+
+| Value | Dev overlay (`111122223333`) | Prod overlay (`444455556666`) |
+| --- | --- | --- |
+| ACM certificate ARN | `arn:aws:acm:ap-southeast-2:111122223333:certificate/00000000-0000-0000-0000-000000000001` | `arn:aws:acm:ap-southeast-2:444455556666:certificate/00000000-0000-0000-0000-000000000002` |
+| WAFv2 Web ACL ARN | `arn:aws:wafv2:ap-southeast-2:111122223333:regional/webacl/<app>/00000000-0000-0000-0000-000000000001` | `arn:aws:wafv2:ap-southeast-2:444455556666:regional/webacl/<app>/00000000-0000-0000-0000-000000000002` |
+| Image digest | `sha256:0000000000000000000000000000000000000000000000000000000000000001` | `sha256:0000000000000000000000000000000000000000000000000000000000000002` |
+
+Rules for dummy values:
+
+- UUIDs use the zero-padded format (`00000000-0000-0000-0000-00000000000N`) with a
+  different trailing digit per overlay so dev and prod stay visually distinct.
+- The WAFv2 `webacl` name segment is the app name (e.g. `regional/webacl/demo-nginx/...`).
+- Image digests are 64 hex characters (`sha256:` prefix + 64 zeros with a trailing
+  digit).
+- These dummies exist only to pass `kustomize build` and `gator test --deny-only` in
+  Git. They are **not** deployable. Replace every dummy with a real ARN or digest before
+  the app reaches a live cluster.
 
 ## Two-layer Argo CD pattern
 
@@ -143,8 +190,11 @@ repository from this repo — assume it already exists.
 # base (floating tag)
 image: 111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>
 
-# overlay pin
-image: 111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>@sha256:<digest>
+# overlay pin (real digest after push)
+image: 111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>@sha256:<64-hex-digest>
+
+# overlay pin (scaffold dummy — passes gator, not deployable)
+image: 111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>@sha256:0000000000000000000000000000000000000000000000000000000000000001
 ```
 
 - Base carries the floating tag (`:latest` or a release tag).
@@ -152,6 +202,9 @@ image: 111122223333.dkr.ecr.ap-southeast-2.amazonaws.com/<app>:<tag>@sha256:<dig
   bump is a one-line diff.
 - Pin the digest even when no admission policy requires it. A tag can be re-pointed at
   different bytes; a digest cannot, so prod runs exactly what dev verified.
+- When the real digest is not yet known (initial scaffold), use the 64-hex dummy
+  (`000...0001` for dev, `000...0002` for prod). Never use a bare string like
+  `REPLACE_WITH_ACTUAL_DIGEST` — it fails the disallowed-tags constraint.
 
 Promotion is copying the digest from `overlays/dev-eks-1` to `overlays/prod-eks-1`.
 Prod runs the exact bytes verified in dev, and the promotion diff shows precisely what

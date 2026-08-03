@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: verify-deprecated-api
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: ["flowcontrol.apiserver.k8s.io"]

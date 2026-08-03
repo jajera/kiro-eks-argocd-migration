@@ -5,7 +5,7 @@ metadata:
     owner: platform
   name: disallow-anonymous
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: ["rbac.authorization.k8s.io"]

@@ -20,19 +20,3 @@ patches:
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-options
         value: SkipDryRunOnMissingResource=true
-  - target:
-      group: constraints.gatekeeper.sh
-      kind: K8sRequiredLabels
-      name: namespaces-must-have-owner
-    patch: |-
-      - op: replace
-        path: /spec/enforcementAction
-        value: deny
-  - target:
-      group: constraints.gatekeeper.sh
-      kind: K8sDisallowDefaultNamespace
-      name: disallow-default-namespace
-    patch: |-
-      - op: replace
-        path: /spec/enforcementAction
-        value: deny

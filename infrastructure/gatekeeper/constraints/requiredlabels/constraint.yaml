@@ -5,7 +5,7 @@ metadata:
   labels:
     owner: platform
 spec:
-  enforcementAction: dryrun
+  enforcementAction: deny
   match:
     kinds:
       - apiGroups: [""]
